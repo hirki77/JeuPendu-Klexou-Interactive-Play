@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu du Pendu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        #game-container {
+            text-align: center;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+        }
+        #game-container h1 {
+            font-weight: 700;
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+        #word {
+            font-size: 2.5em;
+            letter-spacing: 10px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        #message, #lives {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #666;
+        }
+        .keyboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .letter-button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4a90e2;
+            color: white;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .letter-button:hover {
+            background-color: #357abd;
+        }
+        .letter-button:disabled {
+            background-color: #ddd;
+            color: #999;
+            cursor: not-allowed;
+        }
+        #next-word-btn, #restart-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            font-weight: 500;
+        }
+        #restart-btn {
+            background-color: #007bff;
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Jeu du Pendu</h1>
+        <div id="word">_ _ _ _ _</div>
+        <div id="lives">Vies restantes : 12</div>
+        <div class="keyboard" id="keyboard"></div>
+        <div id="message"></div>
+        <button id="next-word-btn" onclick="nextWord()">Mot suivant</button>
+        <button id="restart-btn" onclick="restartGame()">Rejouer</button>
+    </div>
+    <footer>© Sofiane LAMOUROUX Atelier Numérique - Créé par Sofiane LAMOUROUX</footer>
+
+    <script>
+        const words = ["CLIMAT", "TERRE", "OURAGAN", "SECHERESSE", "TEMPERATURE"];
+        let currentWordIndex = 0;
+        let chosenWord = words[currentWordIndex];
+        let displayWord = "_ ".repeat(chosenWord.length).trim();
+        let remainingLives = 12;
+        let guessedLetters = [];
+        let gameResults = [];
+
+        document.getElementById("word").textContent = displayWord;
+        document.getElementById("lives").textContent = "Vies restantes : " + remainingLives;
+
+        function createKeyboard() {
+            const keyboard = document.getElementById("keyboard");
+            keyboard.innerHTML = ""; // Reset keyboard for new word
+            for (let i = 65; i <= 90; i++) {
+                const letter = String.fromCharCode(i);
+                const button = document.createElement("button");
+                button.textContent = letter;
+                button.classList.add("letter-button");
+                button.onclick = () => guessLetter(letter);
+                keyboard.appendChild(button);
+            }
+        }
+
+        function guessLetter(letter) {
+            guessedLetters.push(letter);
+            document.querySelectorAll(".letter-button").forEach(button => {
+                if (button.textContent === letter) {
+                    button.disabled = true;
+                }
+            });
+
+            if (chosenWord.includes(letter)) {
+                let updatedDisplay = "";
+                for (let i = 0; i < chosenWord.length; i++) {
+                    updatedDisplay += guessedLetters.includes(chosenWord[i]) ? chosenWord[i] : "_";
+                    if (i < chosenWord.length - 1) updatedDisplay += " ";
+                }
+                displayWord = updatedDisplay;
+                document.getElementById("word").textContent = displayWord;
+
+                if (!displayWord.includes("_")) {
+                    document.getElementById("message").textContent = "Félicitations ! Vous avez trouvé le mot ! 🎉";
+                    gameResults.push({ word: chosenWord, result: "Trouvé" });
+                    document.getElementById("next-word-btn").style.display = "block";
+                    endGame();
+                }
+            } else {
+                remainingLives--;
+                document.getElementById("lives").textContent = "Vies restantes : " + remainingLives;
+
+                if (remainingLives === 0) {
+                    document.getElementById("message").textContent = "Dommage ! Le mot était : " + chosenWord;
+                    gameResults.push({ word: chosenWord, result: "Non trouvé" });
+                    document.getElementById("next-word-btn").style.display = "block";
+                    endGame();
+                }
+            }
+        }
+
+        function nextWord() {
+            if (currentWordIndex < words.length - 1) {
+                currentWordIndex++;
+                chosenWord = words[currentWordIndex];
+                displayWord = "_ ".repeat(chosenWord.length).trim();
+                remainingLives = 12;
+                guessedLetters = [];
+                document.getElementById("word").textContent = displayWord;
+                document.getElementById("lives").textContent = "Vies restantes : " + remainingLives;
+                document.getElementById("message").textContent = "";
+                document.getElementById("next-word-btn").style.display = "none";
+                createKeyboard();
+            } else {
+                showResults();
+            }
+        }
+
+        function endGame() {
+            document.querySelectorAll(".letter-button").forEach(button => button.disabled = true);
+        }
+
+        function showResults() {
+            const resultContainer = document.getElementById("game-container");
+            resultContainer.innerHTML = "<h1>Résultats du Jeu</h1>";
+            gameResults.forEach(result => {
+                const resultText = document.createElement("p");
+                resultText.textContent = `Mot : ${result.word} - Résultat : ${result.result}`;
+                resultContainer.appendChild(resultText);
+            });
+            // Affiche le bouton "Rejouer"
+            const restartBtn = document.getElementById("restart-btn");
+            restartBtn.style.display = "block";
+        }
+
+        function restartGame() {
+            currentWordIndex = 0;
+            gameResults = [];
+            chosenWord = words[currentWordIndex];
+            displayWord = "_ ".repeat(chosenWord.length).trim();
+            remainingLives = 12;
+            guessedLetters = [];
+            document.getElementById("word").textContent = displayWord;
+            document.getElementById("lives").textContent = "Vies restantes : " + remainingLives;
+            document.getElementById("message").textContent = "";
+            document.getElementById("next-word-btn").style.display = "none";
+            document.getElementById("restart-btn").style.display = "none";
+            createKeyboard();
+        }
+
+        createKeyboard();
+    </script>
+</body>
+</html>
